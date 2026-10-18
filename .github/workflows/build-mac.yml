@@ -1,0 +1,35 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch:      # start by hand: Actions tab > "Build macOS app" > Run workflow
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15          # Apple Silicon Macs (M1, M2, M3, M4)
+            name: AppleSilicon
+          - os: macos-15-intel    # Intel Macs
+            name: Intel
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build ToolToEmail.app
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller openpyxl
+          python -m PyInstaller --windowed --noconfirm --name ToolToEmail app.py
+          codesign --force --deep --sign - dist/ToolToEmail.app
+      - name: Zip the app (keeps Mac file attributes)
+        run: ditto -c -k --keepParent dist/ToolToEmail.app ToolToEmail-Mac-${{ matrix.name }}.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ToolToEmail-Mac-${{ matrix.name }}
+          path: ToolToEmail-Mac-${{ matrix.name }}.zip

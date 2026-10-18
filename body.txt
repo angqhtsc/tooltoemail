@@ -1,0 +1,6 @@
+Dear Parent of {name},
+
+Please find attached the result of {name} (ID {id}).
+
+Best regards,
+School Office
